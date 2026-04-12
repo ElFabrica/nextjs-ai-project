@@ -8,10 +8,26 @@ export async function POST(req: Request) {
 
     const result = streamText({
       model: openai("gpt-4.1-nano"),
-      messages: await convertToModelMessages(messages),
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful coding assistant. Keep resposnes under 3 sentences and focuson on pratical examples.",
+        },
+        ...(await convertToModelMessages(messages)),
+      ],
     });
 
-    return result.toTextStreamResponse();
+    result.usage.then((usage) => {
+      console.log({
+        MessageCount: messages.length,
+        inputTokens: usage.inputTokens,
+        outputTokens: usage.outputTokens,
+        totalTokens: usage.totalTokens,
+      });
+    });
+
+    return result.toUIMessageStreamResponse();
   } catch (error) {
     console.error("Error streaming chat completion: ", error);
     return new Response("Failed to stream chat completion", { status: 500 });
