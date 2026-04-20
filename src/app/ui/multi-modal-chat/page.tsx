@@ -72,6 +72,17 @@ export default function Page() {
                     />
                   );
                 }
+                if (part.mediaType.startsWith("application/pdf")) {
+                  return (
+                    <iframe
+                      key={`${message.id}-${index}`}
+                      src={part.url}
+                      width={"500"}
+                      height={"600"}
+                      title={part.filename ?? `attachment-${index}`}
+                    />
+                  );
+                }
                 return null;
               default:
                 return null;
