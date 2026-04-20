@@ -8,8 +8,6 @@ export default function Page() {
 
   const { messages, sendMessage, status, error, stop } = useChat();
 
-  console.log(messages);
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     sendMessage({ text: input });
