@@ -3,11 +3,12 @@
 import React, { useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import type { ChatMessage } from "@/app/api/tools/route";
 
 export default function Page() {
   const [input, setInput] = useState("");
 
-  const { messages, sendMessage, status, error, stop } = useChat({
+  const { messages, sendMessage, status, error, stop } = useChat<ChatMessage>({
     transport: new DefaultChatTransport({
       api: "/api/tools",
     }),
@@ -36,6 +37,60 @@ export default function Page() {
                     {part.text}
                   </div>
                 );
+              case "tool-getWeather":
+                switch (part.state) {
+                  case "input-streaming":
+                    return (
+                      <div
+                        className="bg-zinc-900/50 border-zinc-700 p-2 rounded "
+                        key={`${message.id}-getWether`}
+                      >
+                        <div className="text-sm text-zinc-500">
+                          Receving weather request...{" "}
+                        </div>
+                        <pre className="text-xs text-zinc-600 mt-1">
+                          {JSON.stringify(part.input, null, 2)}
+                        </pre>
+                      </div>
+                    );
+                  case "input-available":
+                    return (
+                      <div
+                        className="bg-zinc-900/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                        key={`${message.id}-getWether-${index}`}
+                      >
+                        <div className="text-sm text-zinc-500">
+                          Getting weather for {part.input.city}...
+                        </div>
+                      </div>
+                    );
+                  case "output-available":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div className="text-sm text-zinc-400">🌤️ Weather</div>
+                        <div className="text-sm text-zinc-300">
+                          <div>{part.output}</div>
+                        </div>
+                      </div>
+                    );
+                  case "output-error":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div className="text-sm text-red-400">
+                          Error: {part.errorText}
+                        </div>
+                      </div>
+                    );
+                  default:
+                    null;
+                }
+
               default:
                 return null;
             }
