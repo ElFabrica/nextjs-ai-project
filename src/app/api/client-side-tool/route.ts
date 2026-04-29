@@ -42,7 +42,7 @@ const tools = {
         providerOptions: {
           openai: {
             style: "vivid",
-            quality: "hd ",
+            quality: "hd",
           },
         },
       });
@@ -65,13 +65,13 @@ const tools = {
   }),
   changeBackground: tool({
     description:
-      "Replace image background with AI-generated screens base on text promt",
+      "Replace image background with AI-generated scenes based on text prompt",
     inputSchema: z.object({
       imageUrl: z.string().describe("URL of the uploaded image"),
       backgroundPrompt: z
         .string()
         .describe(
-          `Description of the new background (e.g., "modern office", "tropical beach sunset", "mountain landscape")`,
+          'Description of the new background (e.g., "tropical beach sunset", "modern office", "mountain landscape")',
         ),
     }),
     outputSchema: z.string().describe("The transformed image URL"),
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
       model: openai("gpt-4.1-nano"),
       messages: [...(await convertToModelMessages(messages))],
       tools,
-      stopWhen: stepCountIs(2),
+      stopWhen: stepCountIs(3),
     });
 
     result.usage.then((usage) => {

@@ -9,6 +9,14 @@ import {
 import { Image } from "@imagekit/next";
 import type { ChatMessage } from "@/app/api/client-side-tool/route";
 
+function buildTransformationUrl(
+  baseUrl: string,
+  transformation: string,
+): string {
+  const separator = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${separator}tr=${transformation}`;
+}
+
 export default function Page() {
   const [input, setInput] = useState("");
   const [files, setFiles] = useState<FileList | undefined>(undefined);
@@ -30,8 +38,8 @@ export default function Page() {
             {
               const { imageUrl, backgroundPrompt } = toolCall.input;
 
-              const transformation = `e-changebg-propot-${backgroundPrompt}`;
-              const transformUrl = buildTransformationUrl(
+              const transformation = `e-changebg-prompt-${backgroundPrompt}`;
+              const transformedUrl = buildTransformationUrl(
                 imageUrl,
                 transformation,
               );
@@ -39,14 +47,14 @@ export default function Page() {
               addToolResult({
                 tool: "changeBackground",
                 toolCallId: toolCall.toolCallId,
-                output: transformUrl,
+                output: transformedUrl,
               });
             }
             break;
           case "removeBackground": {
             const { imageUrl } = toolCall.input;
 
-            const transformation = `e-removebg`;
+            const transformation = `e-bgremove`;
             const transformedUrl = buildTransformationUrl(
               imageUrl,
               transformation,
@@ -72,14 +80,6 @@ export default function Page() {
       fileInputRef.current.value = "";
     }
   };
-
-  function buildTransformationUrl(
-    baseUrl: string,
-    transformation: string,
-  ): string {
-    const separator = baseUrl.includes("?") ? "&" : "?";
-    return `${baseUrl}${separator}tr=${transformation}`;
-  }
 
   return (
     <div className="flex flex-col w-full max-w-md pt-12 pb-36 mx-auto stretch">
