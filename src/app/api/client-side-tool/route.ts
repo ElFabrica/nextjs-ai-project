@@ -49,7 +49,7 @@ const tools = {
 
       const imageUrl = await uploadImage(image.base64);
 
-      return image;
+      return imageUrl;
     },
     toModelOutput: () => {
       return {
@@ -62,6 +62,26 @@ const tools = {
         ],
       };
     },
+  }),
+  changeBackground: tool({
+    description:
+      "Replace image background with AI-generated screens base on text promt",
+    inputSchema: z.object({
+      imageUrl: z.string().describe("URL of the uploaded image"),
+      backgroundPrompt: z
+        .string()
+        .describe(
+          `Description of the new background (e.g., "modern office", "tropical beach sunset", "mountain landscape")`,
+        ),
+    }),
+    outputSchema: z.string().describe("The transformed image URL"),
+  }),
+  removeBackground: tool({
+    description: "Remove the background of an image",
+    inputSchema: z.object({
+      imageUrl: z.string().describe("URL of the uploaded image"),
+    }),
+    outputSchema: z.string().describe("The transformed image URL"),
   }),
 };
 

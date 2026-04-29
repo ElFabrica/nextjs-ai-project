@@ -2,7 +2,10 @@
 
 import React, { useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import {
+  DefaultChatTransport,
+  lastAssistantMessageIsCompleteWithToolCalls,
+} from "ai";
 import { Image } from "@imagekit/next";
 import type { ChatMessage } from "@/app/api/client-side-tool/route";
 
@@ -12,11 +15,51 @@ export default function Page() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { messages, sendMessage, status, error, stop } = useChat<ChatMessage>({
-    transport: new DefaultChatTransport({
-      api: "/api/client-side-tool",
-    }),
-  });
+  const { messages, sendMessage, status, error, stop, addToolResult } =
+    useChat<ChatMessage>({
+      transport: new DefaultChatTransport({
+        api: "/api/client-side-tool",
+      }),
+      sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+      async onToolCall({ toolCall }) {
+        if (toolCall.dynamic) {
+          return;
+        }
+        switch (toolCall.toolName) {
+          case "changeBackground":
+            {
+              const { imageUrl, backgroundPrompt } = toolCall.input;
+
+              const transformation = `e-changebg-propot-${backgroundPrompt}`;
+              const transformUrl = buildTransformationUrl(
+                imageUrl,
+                transformation,
+              );
+
+              addToolResult({
+                tool: "changeBackground",
+                toolCallId: toolCall.toolCallId,
+                output: transformUrl,
+              });
+            }
+            break;
+          case "removeBackground": {
+            const { imageUrl } = toolCall.input;
+
+            const transformation = `e-removebg`;
+            const transformedUrl = buildTransformationUrl(
+              imageUrl,
+              transformation,
+            );
+            addToolResult({
+              tool: "removeBackground",
+              toolCallId: toolCall.toolCallId,
+              output: transformedUrl,
+            });
+          }
+        }
+      },
+    });
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,6 +72,14 @@ export default function Page() {
       fileInputRef.current.value = "";
     }
   };
+
+  function buildTransformationUrl(
+    baseUrl: string,
+    transformation: string,
+  ): string {
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    return `${baseUrl}${separator}tr=${transformation}`;
+  }
 
   return (
     <div className="flex flex-col w-full max-w-md pt-12 pb-36 mx-auto stretch">
@@ -121,7 +172,10 @@ export default function Page() {
                       >
                         <div>
                           <Image
-                            src={`data:image/png;base64,${part.output}`}
+                            urlEndpoint={
+                              process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT
+                            }
+                            src={part.output}
                             alt="Generated image"
                             width={500}
                             height={500}
@@ -141,6 +195,134 @@ export default function Page() {
                         </div>
                       </div>
                     );
+                  default:
+                    return null;
+                }
+              case "tool-changeBackground":
+                switch (part.state) {
+                  case "input-streaming":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div className="text-sm text-zinc-500">
+                          Receiving image transformation request...
+                        </div>
+                        <pre className="text-xs text-zinc-600 mt-1">
+                          {JSON.stringify(part.input, null, 2)}
+                        </pre>
+                      </div>
+                    );
+
+                  case "input-available":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div className="text-sm text-zinc-400">
+                          Changing background to: {part.input.backgroundPrompt}
+                        </div>
+                      </div>
+                    );
+
+                  case "output-available":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div>
+                          <Image
+                            urlEndpoint={
+                              "https://ik.imagekit.io/codevolutionbus/"
+                            }
+                            src={part.output}
+                            alt="Generated image"
+                            width={500}
+                            height={500}
+                          />
+                        </div>
+                      </div>
+                    );
+
+                  case "output-error":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div className="text-sm text-red-400">
+                          Error: {part.errorText}
+                        </div>
+                      </div>
+                    );
+
+                  default:
+                    return null;
+                }
+              case "tool-removeBackground":
+                switch (part.state) {
+                  case "input-streaming":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div className="text-sm text-zinc-500">
+                          Receiving image transformation request...
+                        </div>
+                        <pre className="text-xs text-zinc-600 mt-1">
+                          {JSON.stringify(part.input, null, 2)}
+                        </pre>
+                      </div>
+                    );
+
+                  case "input-available":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div className="text-sm text-zinc-400">
+                          Removing background...
+                        </div>
+                      </div>
+                    );
+
+                  case "output-available":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div>
+                          <Image
+                            urlEndpoint={
+                              "https://ik.imagekit.io/codevolutionbus/"
+                            }
+                            src={part.output}
+                            alt="Generated image"
+                            width={500}
+                            height={500}
+                          />
+                        </div>
+                      </div>
+                    );
+
+                  case "output-error":
+                    return (
+                      <div
+                        key={`${message.id}-getWeather-${index}`}
+                        className="bg-zinc-800/50 border border-zinc-700 p-2 rounded mt-1 mb-2"
+                      >
+                        <div className="text-sm text-red-400">
+                          Error: {part.errorText}
+                        </div>
+                      </div>
+                    );
+
                   default:
                     return null;
                 }
