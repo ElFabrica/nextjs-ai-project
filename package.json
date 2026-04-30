@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.60",
+    "@ai-sdk/mcp": "^1.0.37",
     "@ai-sdk/openai": "^3.0.52",
     "@ai-sdk/react": "^3.0.155",
     "@google/genai": "^1.48.0",
     "@imagekit/next": "^2.1.5",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "ai": "^6.0.153",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
